@@ -1,0 +1,82 @@
+
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: eventnest_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: eventnest_db
+      MYSQL_USER: eventnest_user
+      MYSQL_PASSWORD: eventnest_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - eventnest_network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend (Node.js, Express, Prisma) Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eventnest_backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: "mysql://eventnest_user:eventnest_pass@db:3306/eventnest_db"
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      PORT: 4000
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-your-email@gmail.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-your-app-password}
+      EMAIL_FROM: ${EMAIL_FROM:-EventNest <your-email@gmail.com>}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-production}
+    volumes:
+      - ./backend/certificates:/app/certificates
+      - ./backend/prisma:/app/prisma
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - eventnest_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/events" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (React) Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventnest_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - eventnest_network
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:4000}
+
+networks:
+  eventnest_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
