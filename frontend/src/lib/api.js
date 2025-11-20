@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: process.env.API_BASE_URL,
+ baseURL: "https://event-nest-backend.vercel.app/",
 });
 
 apiClient.interceptors.request.use((config) => {
