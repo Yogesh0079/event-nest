@@ -2,79 +2,89 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // User Model
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password_hash String
-  role          UserRole  @default(STUDENT)
-  events        Event[]   @relation("OrganizedBy")
-  registrations Registration[]
-  certificates  Certificate[]
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password_hash String
+  role          UserRole  @default(STUDENT)
+  
+  // FIX: Added timestamp fields to the User model
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  // End FIX
+  
+  events        Event[]   @relation("OrganizedBy")
+  registrations Registration[]
+  certificates  Certificate[]
 }
 
 enum UserRole {
-  STUDENT
-  ORGANIZER
-  ADMIN
+  STUDENT
+  ORGANIZER
+  ADMIN
 }
 
 // Event Model
 model Event {
-  id           String    @id @default(uuid())
-  title        String
-  description  String    @db.Text
-  date         DateTime
-  location     String
-  category     String
-  image_url    String?
-  organizer    User      @relation("OrganizedBy", fields: [organizer_id], references: [id])
-  organizer_id String
-  registrations Registration[]
-  certificates Certificate[]
+  id           String    @id @default(uuid())
+  title        String
+  description  String    @db.Text
+  date         DateTime
+  location     String
+  category     String
+  image_url    String?
+  organizer    User      @relation("OrganizedBy", fields: [organizer_id], references: [id])
+  organizer_id String
+  registrations Registration[]
+  certificates Certificate[]
+  
+  // Good practice to add timestamps to the Event model too
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 
-  @@index([organizer_id])
+  @@index([organizer_id])
 }
 
-// Registration Model
+// Registration Model (No changes needed here as it has registered_at)
 model Registration {
-  id            String   @id @default(uuid())
-  user          User     @relation(fields: [user_id], references: [id])
-  user_id       String
-  event         Event    @relation(fields: [event_id], references: [id])
-  event_id      String
-  registered_at DateTime @default(now())
-  attended      Boolean  @default(false)
-  ticket_code   String   @unique @default(uuid())
-  qr_code       String?  @db.Text
-  checked_in_at DateTime?
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [user_id], references: [id])
+  user_id       String
+  event         Event    @relation(fields: [event_id], references: [id])
+  event_id      String
+  registered_at DateTime @default(now())
+  attended      Boolean  @default(false)
+  ticket_code   String   @unique @default(uuid())
+  qr_code       String?  @db.Text
+  checked_in_at DateTime?
 
-  @@unique([user_id, event_id]) // A user can only register for an event once
-  @@index([user_id])
-  @@index([event_id])
-  @@index([ticket_code])
+  @@unique([user_id, event_id]) // A user can only register for an event once
+  @@index([user_id])
+  @@index([event_id])
+  @@index([ticket_code])
 }
 
-// Certificate Model
+// Certificate Model (No changes needed here as it has issued_at)
 model Certificate {
-  id              String   @id @default(uuid())
-  user            User     @relation(fields: [user_id], references: [id])
-  user_id         String
-  event           Event    @relation(fields: [event_id], references: [id])
-  event_id        String
-  issued_at       DateTime @default(now())
-  certificate_url String // Link to the generated PDF/image
+  id              String   @id @default(uuid())
+  user            User     @relation(fields: [user_id], references: [id])
+  user_id         String
+  event           Event    @relation(fields: [event_id], references: [id])
+  event_id        String
+  issued_at       DateTime @default(now())
+  certificate_url String // Link to the generated PDF/image
 
-  @@unique([user_id, event_id]) // Only one certificate per user per event
-  @@index([user_id])
-  @@index([event_id])
+  @@unique([user_id, event_id]) // Only one certificate per user per event
+  @@index([user_id])
+  @@index([event_id])
 }
