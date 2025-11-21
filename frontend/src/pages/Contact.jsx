@@ -47,7 +47,7 @@ export default function ContactPage() {
               <MailIcon className="w-6 h-6 text-emerald-400 mt-1 flex-shrink-0" />
               <div>
                 <h4 className="text-lg font-semibold">Email Us</h4>
-                <p className="text-gray-300">support@eventnest.demo</p>
+                <p className="text-gray-300">eventnest.contact@gmail.com</p>
               </div>
             </div>
           </div>
