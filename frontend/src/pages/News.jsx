@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import PageHero from '../components/PageHero.jsx';
 import { Megaphone, Bell, HelpCircle, ArrowRight, Zap, X, CheckCircle, Music } from 'lucide-react';
 
